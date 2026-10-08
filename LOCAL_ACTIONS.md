@@ -24,7 +24,11 @@ The server binds only to 127.0.0.1. Host/origin checks and a per-server browser-
 
 ## Notepad and applications
 
-`openApplication` supports installed Notepad, VS Code, Chrome, and Word. `notepadDraft` creates a unique UTF-8 working file under `.sameera-drafts`, verifies the exact bytes, and launches Notepad with that file. It does not type into or overwrite an existing window. The working draft persists locally; saving a permanent copy needs your destination instruction. Save manual Notepad changes before asking Sameera to read them. Text-delivery verification does not guarantee that speech was interpreted correctly; ask for a read-back when names or numbers matter.
+Ask “Open OBS Studio,” “Open Calculator,” or “Close Chrome.” `openApplication` discovers Start menu shortcuts, registered executables and Windows Store apps. `listApplications` can search installed names; ambiguous results return a choice instead of guessing. Portable applications can be opened using an exact absolute local `.exe` path supplied by you. Commands and extra executable arguments are not accepted.
+
+`listRunningApplications` returns visible application processes and window titles. `closeApplication` sends the normal close request to the chosen process's main window and checks for exit. If several instances match, specify a window or explicitly ask for all matching instances. A selected process ID must include the returned start time, so an old selection cannot target a reused ID. Save dialogs, remaining windows, apps that minimize to the tray, elevated apps, and apps that refuse to exit may need your interaction. Pending closes are reported as pending; there is no force-kill, automatic retry or save-dialog dismissal. Background services, the Windows shell and Sameera itself are excluded.
+
+`notepadDraft` creates a unique UTF-8 working file under `.sameera-drafts`, verifies the exact bytes, and launches Notepad with that file. It does not type into or overwrite an existing window. The working draft persists locally; saving a permanent copy needs your destination instruction. Save manual Notepad changes before asking Sameera to read them. Text-delivery verification does not guarantee that speech was interpreted correctly; ask for a read-back when names or numbers matter.
 
 ## Gmail in Chrome
 

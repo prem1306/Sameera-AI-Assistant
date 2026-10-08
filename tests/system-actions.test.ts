@@ -4,6 +4,37 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { SystemActions, checkedPath } from '../src/services/SystemActions.ts';
 
+test('app commands support arbitrary installed names, require close targets, and deduplicate side effects', async () => {
+  const calls: { action: string; args: Record<string, any> }[] = [];
+  const actions = new SystemActions(async (action, args) => { calls.push({ action, args }); return { success: true, launchRequested: true }; });
+  assert.equal((await actions.execute('open-obs', 'openApplication', { application: 'OBS Studio' })).success, true);
+  await actions.execute('open-obs', 'openApplication', { application: 'OBS Studio' });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].args.application, 'OBS Studio');
+  await actions.execute('list', 'listApplications', { application: 'Adobe' });
+  await actions.execute('running', 'listRunningApplications', {});
+  await actions.execute('close-obs', 'closeApplication', { application: 'OBS Studio' });
+  assert.equal(calls.at(-1)?.args.allInstances, false);
+  assert.equal((await actions.execute('missing-close', 'closeApplication', { allInstances: true })).needsClarification, true);
+  actions.resumeFromUser();
+  assert.equal((await actions.execute('wildcard-close', 'closeApplication', { application: '*', allInstances: true })).needsClarification, true);
+  actions.resumeFromUser();
+  assert.equal((await actions.execute('stale-selection', 'closeApplication', { processId: 123 })).needsClarification, true);
+  actions.resumeFromUser();
+  assert.equal((await actions.execute('command', 'openApplication', { executablePath: 'C:\\app.exe --run-command' })).needsClarification, true);
+  actions.resumeFromUser();
+  assert.equal((await actions.execute('script', 'openApplication', { executablePath: 'C:\\app.ps1' })).needsClarification, true);
+  assert.equal(calls.length, 4);
+});
+
+test('ambiguous app names pause later actions until the user selects an app', async () => {
+  let calls = 0;
+  const actions = new SystemActions(async () => { calls++; return { success: false, needsClarification: true, question: 'Which editor?', applications: [{ name: 'Editor A' }, { name: 'Editor B' }] }; });
+  assert.equal((await actions.execute('ambiguous-app', 'openApplication', { application: 'Editor' })).needsClarification, true);
+  assert.equal((await actions.execute('premature-close', 'closeApplication', { application: 'Editor' })).needsClarification, true);
+  assert.equal(calls, 1);
+});
+
 test('missing details, credentials and system folders never execute', async () => {
   const actions = new SystemActions();
   assert.equal((await actions.execute('missing', 'openFile', {})).needsClarification, true);

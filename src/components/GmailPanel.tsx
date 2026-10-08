@@ -84,7 +84,7 @@ export function GmailPanel() {
         <ol className="list-decimal pl-5 space-y-3">
           <li>In Chrome, open <code>chrome://extensions</code>, enable Developer mode, and choose <strong>Load unpacked</strong>.</li>
           <li>Select the <strong>chrome-extension</strong> folder shown below.</li>
-          <li>Open the Sameera Gmail Bridge extension, paste the pairing code, and choose <strong>Connect</strong>.</li>
+          <li>Open the Sameera Gmail Bridge extension, select <strong>{window.location.port === '3001' ? 'Windows desktop app' : 'Web app'}</strong>, paste the pairing code, and choose <strong>Connect</strong>.</li>
           <li>Leave one signed-in Gmail inbox tab open and reload it after installation. Then ask Sameera to draft your email.</li>
         </ol>
         {pair && <>

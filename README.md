@@ -1,6 +1,10 @@
 # Sameera AI Assistant
 
-A local voice assistant built with React, Express, and Gemini Live. It supports Telugu, Tenglish, and English, article search and reading, Windows application/file actions, and Gmail drafts with separate human approval for sending.
+A voice assistant built with React, Express, and Gemini Live, available as a website or a Windows desktop application. Both support Telugu, Tenglish, English, and web/article tools. Windows additionally provides local app/file controls and the Gmail bridge.
+
+## Replit website
+
+See [REPLIT_SETUP.md](REPLIT_SETUP.md) for importing, secrets and publishing. Run `npm run dev:web` for development, or `npm run build:web` followed by `npm run start:web` for production. Web mode hides Windows controls and rejects native action requests at the server.
 
 ## Run locally
 
@@ -19,11 +23,33 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) and start a voice session. Allow microphone access when prompted. The server binds only to `127.0.0.1`; keep it local.
 
+## Windows desktop application
+
+Run Sameera in its own desktop window from the checkout:
+
+```powershell
+npm run desktop
+```
+
+This builds the UI and bundles the local server. It uses your existing development `.env` key. The desktop server uses port 3001, so the web app on port 3000 can stay open independently. Close the desktop window to stop its server.
+
+Create a Windows x64 installer:
+
+```powershell
+npm run desktop:dist
+```
+
+The installer is written to `release/Sameera-Setup-1.1.0.exe` and creates desktop and Start menu shortcuts. Installed copies include their own runtime and do not require Node.js or npm. On first launch, enter your Gemini API key; it is stored encrypted for your Windows account under Sameera's application-data folder. Use **App → Gemini key settings** to replace it. No `.env` file or API key is included in the installer. Internet access and Google AI quota are still required for voice and AI search. This local build is unsigned and does not provide automatic updates.
+
+For Gmail, install the included Chrome extension from the folder shown in the Gmail panel, choose **Windows desktop app** in the extension, and pair it with the desktop window's code. Re-pair after restarting Sameera. Notepad working drafts are written inside `Documents/Sameera/.sameera-drafts` in desktop mode. Browser links open in your default browser; embedded media and article readers remain in Sameera.
+
+`npm run desktop:pack` builds the unpacked Windows application for local testing. The startup check `electron . --smoke-test` loads the production UI and verifies the server and bundled Windows/extension assets without starting a voice session.
+
 ## Capabilities
 
 - Live conversation in Telugu, Tenglish, and English, with bounded conversation history and speech recovery.
 - Article searches ask for a topic, show source choices, and open one selected article. The reader keeps paragraph and selected-text context for explanations.
-- Open installed Notepad, VS Code, Chrome, or Word by name. Notepad notes use separate verified UTF-8 working drafts.
+- Discover and open installed Windows apps by name, or a portable app by an exact executable path. Close requested application windows gracefully, with a choice for ambiguous matches and normal save prompts. Notepad notes use separate verified UTF-8 working drafts.
 - Explicit Windows file/folder actions, backed-up text edits, Word edits, volume, and supported-display brightness controls. Ambiguous details cause a pause.
 - Gmail drafting in Chrome through the included extension. Sending requires the exact-message **Approve and send** button; drafting never grants send permission.
 
@@ -34,7 +60,8 @@ See [LOCAL_ACTIONS.md](LOCAL_ACTIONS.md) for examples, supported operations, and
 ```powershell
 npm run lint
 npm run build
-node --import tsx --test tests/*.test.ts tests/*.test.mjs
+npm run build:web
+node --import tsx --test tests/*.test.ts tests/*.test.mjs tests/*.test.cjs
 ```
 
 Optional local-server smoke checks (no emails sent):

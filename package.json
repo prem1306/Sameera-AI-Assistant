@@ -1,7 +1,7 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -9,7 +9,14 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "desktop:prepare": "npm run build && node scripts/build-desktop.mjs",
+    "desktop": "npm run desktop:prepare && electron .",
+    "desktop:pack": "npm run desktop:prepare && node scripts/package-desktop.mjs --dir",
+    "desktop:dist": "npm run desktop:prepare && node scripts/package-desktop.mjs",
+    "dev:web": "node scripts/run-web.mjs",
+    "build:web": "npm run build && node scripts/build-web.mjs",
+    "start:web": "node scripts/run-web.mjs --production"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -32,9 +39,15 @@
     "@types/react-dom": "^19.3.0",
     "@types/ws": "^8.18.2",
     "autoprefixer": "^10.4.21",
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
     "esbuild": "^0.28.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2"
+  },
+  "main": "desktop/main.cjs",
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

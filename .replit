@@ -1,0 +1,16 @@
+entrypoint = "server.ts"
+modules = ["nodejs-22"]
+run = ["npm", "run", "dev:web"]
+
+[env]
+SAMEERA_MODE = "web"
+PORT = "3000"
+ELECTRON_SKIP_BINARY_DOWNLOAD = "1"
+
+[deployment]
+build = ["sh", "-c", "ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci && npm run build:web"]
+run = ["npm", "run", "start:web"]
+
+[[ports]]
+localPort = 3000
+externalPort = 80

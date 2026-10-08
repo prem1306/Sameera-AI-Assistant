@@ -9,7 +9,7 @@ type Args = Record<string, any>;
 export type SystemResult = { success: boolean; needsClarification?: boolean; question?: string; [key: string]: any };
 const ask = (question: string): SystemResult => ({ success: false, needsClarification: true, question, instruction: 'Ask the user this question and WAIT. Do not guess or execute further dependent actions.' });
 const hash = (data: Buffer) => createHash('sha256').update(data).digest('hex');
-const script = fileURLToPath(new URL('../../scripts/windows-actions.ps1', import.meta.url));
+const script = process.env.SAMEERA_NATIVE_ROOT || process.env.SAMEERA_APP_ROOT ? path.join(process.env.SAMEERA_NATIVE_ROOT || process.env.SAMEERA_APP_ROOT!, 'scripts', 'windows-actions.ps1') : fileURLToPath(new URL('../../scripts/windows-actions.ps1', import.meta.url));
 
 export async function checkedPath(value: unknown): Promise<string> {
   if (typeof value !== 'string' || !path.isAbsolute(value) || value.startsWith('\\\\')) throw new Error('Specify the exact absolute local path, including drive and filename.');
@@ -73,11 +73,17 @@ export class SystemActions {
   }
 
   private async perform(action: string, args: Args): Promise<SystemResult> {
-    if (action === 'openApplication') {
-      const aliases: Record<string, string> = { notepad: 'notepad', 'vs code': 'vscode', 'visual studio code': 'vscode', vscode: 'vscode', code: 'vscode', chrome: 'chrome', word: 'word' };
-      const application = aliases[String(args.application || '').trim().toLowerCase()];
-      if (!application) return ask('Which application should I open: Notepad, VS Code, Chrome, or Word?');
-      return this.nativeAction(action, { application });
+    if (['openApplication', 'closeApplication', 'listApplications', 'listRunningApplications'].includes(action)) {
+      const application = typeof args.application === 'string' ? args.application.trim() : '';
+      if (application.length > 160 || /[\x00-\x1f]/.test(application)) return ask('Give the application name as it appears in Windows.');
+      if (application && !/[\p{L}\p{N}]/u.test(application)) return ask('Give the actual application name, not a wildcard.');
+      if (/(?:^|\s)--?[A-Za-z]/.test(application)) return ask('Give an application name without shell commands or command-line arguments.');
+      if (args.appId !== undefined && (typeof args.appId !== 'string' || !/^[a-f0-9]{64}$/.test(args.appId))) return ask('Choose an application ID from the returned installed-app list.');
+      if (args.executablePath !== undefined && (action !== 'openApplication' || typeof args.executablePath !== 'string' || !path.isAbsolute(args.executablePath) || args.executablePath.startsWith('\\\\') || !/\.exe$/i.test(args.executablePath) || args.executablePath.slice(path.parse(args.executablePath).root.length).includes(':') || /[\x00-\x1f"]/.test(args.executablePath))) return ask('Provide an exact absolute local .exe path without commands or arguments.');
+      if (action === 'closeApplication' && args.processId !== undefined && (!Number.isSafeInteger(args.processId) || args.processId <= 0 || typeof args.startedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(args.startedAt))) return ask('Select a process ID and its start time from the current running-application list.');
+      if (action === 'openApplication' && !application && !args.appId && !args.executablePath) return ask('Which installed application should I open?');
+      if (action === 'closeApplication' && !application && !args.processId) return ask('Which application should I close?');
+      return this.nativeAction(action, { application, appId: args.appId, executablePath: args.executablePath, processId: args.processId, startedAt: args.startedAt, allInstances: args.allInstances === true });
     }
     if (action === 'notepadDraft') {
       if (typeof args.text !== 'string' || !args.text.trim()) return ask('What would you like me to write in Notepad?');

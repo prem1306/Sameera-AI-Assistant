@@ -1,6 +1,7 @@
 node_modules/
 build/
 dist/
+release/
 coverage/
 .sameera-drafts/
 .system-actions-test-*/

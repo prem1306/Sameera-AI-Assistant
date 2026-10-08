@@ -1,0 +1,30 @@
+appId: com.sameera.assistant
+productName: Sameera
+directories:
+  app: build/desktop-app
+  output: release
+asar: true
+asarUnpack:
+  - scripts/**
+  - chrome-extension/**
+npmRebuild: false
+files:
+  - '!node_modules/**'
+  - desktop/**
+  - server.mjs
+  - dist/**
+  - scripts/**
+  - chrome-extension/**
+  - package.json
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  artifactName: Sameera-Setup-${version}.${ext}

@@ -259,7 +259,7 @@ export class StateManager {
     if (/sport|sports|gym|workout|fitness|exercise|basketball|football|soccer|tennis|run|running/i.test(lower)) {
       topics.push('Sports & Fitness');
     }
-    if (/music|song|listen|artist|band|playlist|spotify|guitar|beats/i.test(lower)) {
+    if (/music|song|listen|artist|band|playlist|guitar|beats/i.test(lower)) {
       topics.push('Music & Playlists');
     }
     if (/game|gaming|steam|playstation|xbox|nintendo|gamer/i.test(lower)) {

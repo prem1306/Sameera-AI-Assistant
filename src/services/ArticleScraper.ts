@@ -5,6 +5,7 @@
  */
 
 import * as cheerio from 'cheerio';
+import { fetchPublicPage } from './PublicWeb';
 
 export interface ScrapedArticle {
   success: boolean;
@@ -24,20 +25,7 @@ export async function scrapeArticleOrWebpage(targetUrl: string): Promise<Scraped
   }
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
-
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-    });
-
-    clearTimeout(timeout);
+    const res = await fetchPublicPage(url);
 
     if (!res.ok) {
       throw new Error(`Failed to fetch webpage (Status: ${res.status} ${res.statusText})`);

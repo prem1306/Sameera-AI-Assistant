@@ -3,28 +3,11 @@ $ErrorActionPreference = 'Stop'
 [Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
 $task = [Console]::In.ReadToEnd() | ConvertFrom-Json
 function Ask([string]$question) { return @{ success = $false; needsClarification = $true; question = $question; instruction = 'Ask the user and wait. Do not execute further dependent steps.' } }
+. (Join-Path $PSScriptRoot 'windows-apps.ps1')
 
 try {
   $result = switch ($task.action) {
-    'openApplication' {
-      $candidates = switch ($task.application) {
-        'notepad' { @((Join-Path $env:WINDIR 'System32\notepad.exe')) }
-        'vscode' {
-          @((Join-Path $env:LOCALAPPDATA 'Programs\Microsoft VS Code\Code.exe'), (Join-Path $env:ProgramFiles 'Microsoft VS Code\Code.exe'), 'C:\Microsoft VS Code\Code.exe')
-          $codeCommand = Get-Command code.cmd -ErrorAction SilentlyContinue
-          if ($codeCommand) { Join-Path (Split-Path (Split-Path $codeCommand.Source -Parent) -Parent) 'Code.exe' }
-        }
-        'chrome' { @((Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'), (Join-Path $env:LOCALAPPDATA 'Google\Chrome\Application\chrome.exe')) }
-        'word' { @((Join-Path $env:ProgramFiles 'Microsoft Office\root\Office16\WINWORD.EXE')) }
-        default { @() }
-      }
-      $executable = $candidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
-      if (!$executable) { Ask 'That application was not found in a supported installation location. Please provide its location or choose another application.' }
-      else {
-        Start-Process -FilePath $executable
-        @{ success = $true; application = $task.application; message = 'Launched the requested application.' }
-      }
-    }
+    { $_ -in @('openApplication','closeApplication','listApplications','listRunningApplications') } { Invoke-AppAction $task }
     'notepadOpen' {
       Start-Process -FilePath (Join-Path $env:WINDIR 'System32\notepad.exe') -ArgumentList ('"' + $task.path + '"')
       @{ success = $true; application = 'Notepad'; message = 'Opened the verified note draft in Notepad.' }
@@ -34,7 +17,7 @@ try {
       try { Add-Type -Path (Join-Path $PSScriptRoot 'WindowsAudio.cs'); $volume = [Math]::Round([Sameera.WindowsAudio]::GetVolume() * 100) } catch { }
       $brightness = $null
       try { $brightness = (Get-CimInstance -Namespace root/WMI -ClassName WmiMonitorBrightness -ErrorAction Stop | Where-Object Active | Select-Object -First 1).CurrentBrightness } catch { }
-      @{ success = $true; platform = 'Windows'; volume = $volume; brightness = $brightness; home = $env:USERPROFILE; desktop = [Environment]::GetFolderPath('Desktop'); documents = [Environment]::GetFolderPath('MyDocuments'); actions = @('openApplication','notepadDraft','listFolder','findFile','readText','writeText','replaceText','createFolder','move','copy','rename','recycle','openFile','openChrome','volume','brightness','wordRead','wordReplace','wordAppend','wordSave') }
+      @{ success = $true; platform = 'Windows'; volume = $volume; brightness = $brightness; home = $env:USERPROFILE; desktop = [Environment]::GetFolderPath('Desktop'); documents = [Environment]::GetFolderPath('MyDocuments'); actions = @('openApplication','closeApplication','listApplications','listRunningApplications','notepadDraft','listFolder','findFile','readText','writeText','replaceText','createFolder','move','copy','rename','recycle','openFile','openChrome','volume','brightness','wordRead','wordReplace','wordAppend','wordSave') }
     }
     'openChrome' {
       $chromePaths = @((Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'), (Join-Path ${env:ProgramFiles(x86)} 'Google\Chrome\Application\chrome.exe'), (Join-Path $env:LOCALAPPDATA 'Google\Chrome\Application\chrome.exe'))

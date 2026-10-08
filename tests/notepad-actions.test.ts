@@ -21,7 +21,8 @@ test('Notepad uses a separate Unicode draft, verifies bytes, and repeated calls 
     assert.equal(calls.length, 1);
     const launch = await actions.execute('code', 'openApplication', { application: 'VS Code' });
     assert.equal(launch.success, true);
-    assert.deepEqual(calls[1], { action: 'openApplication', args: { application: 'vscode' } });
+    assert.equal(calls[1].action, 'openApplication');
+    assert.equal(calls[1].args.application, 'VS Code');
     assert.equal((await actions.execute('shell', 'openApplication', { application: 'powershell -command arbitrary' })).needsClarification, true);
     assert.equal(calls.length, 2);
   } finally {

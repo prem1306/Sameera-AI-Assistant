@@ -4,7 +4,8 @@
  * dynamic audio-reactive visuals, live mic volume meter, ethereal speech bubbles, and instant tool actions.
  */
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { runtimeCapabilities } from '../services/RuntimeCapabilities';
 import {
   Mic,
   MicOff,
@@ -38,6 +39,8 @@ import { ArticleSourcesModal } from './ArticleSourcesModal';
 import { GmailPanel } from './GmailPanel';
 
 export const SameeraInterface: React.FC = () => {
+  const capabilities = useSyncExternalStore(runtimeCapabilities.subscribe, runtimeCapabilities.getSnapshot);
+  useEffect(() => { void runtimeCapabilities.load(); }, []);
   // Instantiate singleton services
   const streamer = useMemo(() => new AudioStreamer(), []);
   const player = useMemo(() => new AudioPlayer(), []);
@@ -180,6 +183,11 @@ export const SameeraInterface: React.FC = () => {
 
   // Toggle session connection
   const handleToggleConnection = async () => {
+    if (!capabilities.ready) {
+      stateManager.setErrorMessage('Features are still loading. Please try again in a moment.');
+      void runtimeCapabilities.load();
+      return;
+    }
     stateManager.setErrorMessage(null);
 
     if (assistantState === 'disconnected') {
@@ -287,7 +295,7 @@ export const SameeraInterface: React.FC = () => {
                 SAMEERA
               </h1>
               <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-white/10 text-white/70 border border-white/15">
-                Live Voice AI
+                {capabilities.ready ? capabilities.label : 'Loading features…'}
               </span>
               {assistantState !== 'disconnected' && (
                 <span
@@ -459,7 +467,7 @@ export const SameeraInterface: React.FC = () => {
           </button>
 
           {/* Audio Diagnostics HUD */}
-          <GmailPanel />
+          {capabilities.gmailBridge && <GmailPanel />}
           <button
             onClick={() => setIsDiagnosticOpen(true)}
             className="p-2.5 rounded-2xl bg-white/[0.07] hover:bg-white/[0.12] backdrop-blur-xl border border-white/15 text-cyan-400 hover:text-cyan-300 transition-all"
@@ -477,6 +485,11 @@ export const SameeraInterface: React.FC = () => {
           </button>
         </div>
       </header>
+      <p className="relative z-10 text-center text-xs text-white/50 px-5" role="status">
+        {capabilities.ready ? (capabilities.windowsControls
+          ? 'Windows application · Voice & web · Apps & files · PC controls · Gmail bridge'
+          : 'Website · Voice conversations · Web search · Articles & videos') : 'Connecting to Sameera…'}
+      </p>
 
       {/* Context Compaction Toast Banner */}
       {contextNotification && (
@@ -928,7 +941,7 @@ export const SameeraInterface: React.FC = () => {
                 <ul className="space-y-1.5 text-white/60">
                   <li>• <strong className="text-white">Open YouTube Videos:</strong> &ldquo;Open YouTube lo-fi beats&rdquo; or &ldquo;Open MrBeast on YouTube&rdquo; to launch the video player on your screen.</li>
                   <li>• <strong className="text-white">Read Articles & Novels:</strong> &ldquo;Read this article for me: [link]&rdquo; or &ldquo;Read chapter 1 of this story&rdquo; and Sameera will open reader mode and read it aloud with her expressive voice!</li>
-                  <li>• <strong className="text-white">Open Websites:</strong> &ldquo;Sameera, open Wikipedia&rdquo; or GitHub, Spotify, etc.</li>
+                  <li>• <strong className="text-white">Open Websites:</strong> &ldquo;Sameera, open Wikipedia&rdquo; or GitHub, etc.</li>
                   <li>• <strong className="text-white">Web Search:</strong> &ldquo;Search Google for today&apos;s tech news.&rdquo;</li>
                   <li>• <strong className="text-white">Date & Time:</strong> &ldquo;What time and day is it?&rdquo;</li>
                   <li>• <strong className="text-white">Change Theme:</strong> &ldquo;Sameera, switch theme to Cyberpunk or Emerald.&rdquo;</li>
@@ -937,9 +950,11 @@ export const SameeraInterface: React.FC = () => {
               </div>
 
               <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10">
-                <h4 className="font-semibold text-white text-sm mb-1">Windows Computer Actions</h4>
-                <p className="text-white/60">Ask Sameera to open Notepad, VS Code, Chrome, or Word. Say “Open Notepad and neatly write my meeting notes…” to create a separate verified working draft. She asks about unclear details before proceeding. Existing text edits preserve an undo copy.</p>
-                <p className="text-white/60 mt-2">For Gmail in Chrome, connect the bridge using the Gmail button. Ask for a draft with an exact recipient and purpose. Sending requires a separate request and your click on the exact-message approval preview.</p>
+                <h4 className="font-semibold text-white text-sm mb-1">{capabilities.windowsControls ? 'Windows Computer Actions' : 'Sameera on the Web'}</h4>
+                {capabilities.windowsControls ? <>
+                  <p className="text-white/60">Ask Sameera to open or close an installed app by name, manage files, adjust volume, or create a Notepad working draft. Closing an app preserves its save prompts. She asks when a command needs clarification.</p>
+                  <p className="text-white/60 mt-2">For Gmail in Chrome, connect the Gmail bridge. Drafting and sending are separate requests; sending requires your click on the exact-message approval preview.</p>
+                </> : <p className="text-white/60">Talk with Sameera, search the web, read articles, watch videos, and take browser notes. To control installed apps, files, or PC settings, use Sameera for Windows.</p>}
               </div>
 
               <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10">

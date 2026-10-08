@@ -1,4 +1,3 @@
-const base = 'http://127.0.0.1:3000';
 let busy = false;
 let timer;
 const drafts = new Map();
@@ -53,8 +52,10 @@ async function poll() {
   if (busy) return;
   busy = true;
   try {
-    const { token } = await chrome.storage.local.get('token');
+    const { token, serverUrl = 'http://127.0.0.1:3000' } = await chrome.storage.local.get(['token', 'serverUrl']);
     if (!token) return;
+    if (!['http://127.0.0.1:3000', 'http://127.0.0.1:3001'].includes(serverUrl)) return;
+    const base = serverUrl;
     const headers = { 'Content-Type': 'application/json', 'X-Sameera-Browser-Token': token };
     const response = await fetch(base + '/api/browser/next', { method: 'POST', headers, body: '{}', signal: AbortSignal.timeout(4000) });
     if (!response.ok) { await chrome.action.setBadgeText({ text: '!' }); return; }

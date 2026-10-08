@@ -5,6 +5,8 @@
 
 import { QuickNote, ToolExecutionEvent, VisualTheme, MediaViewerState, ArticleReaderState, ArticleSearchState } from '../types/assistant';
 import { ArticleContext } from './ArticleContext';
+import { runtimeCapabilities } from './RuntimeCapabilities';
+import { DESKTOP_TOOLS } from './RuntimePolicy';
 
 export interface ToolCallPayload {
   id: string;
@@ -113,6 +115,7 @@ export class ToolManager {
 
   private async executeSingleCall(call: ToolCallPayload): Promise<Record<string, any>> {
     console.log(`[ToolManager] Executing ${call.name}`);
+    if (DESKTOP_TOOLS.has(call.name) && !runtimeCapabilities.getSnapshot().windowsControls) return { success: false, message: 'This feature is available in Sameera for Windows. The website supports conversation and browsing.' };
     if (this.articleSearch && !this.selectedArticleUrl && ['openWebsite', 'searchWeb'].includes(call.name)) {
       return { success: false, message: 'Article sources are already displayed. Ask which source the user wants and wait, or use chooseArticle after their explicit selection/delegation. No tabs were opened.' };
     }
