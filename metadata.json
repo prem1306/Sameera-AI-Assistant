@@ -1,0 +1,1 @@
+{"name":"Sameera AI Assistant","description":"Real-time, voice-to-voice AI assistant powered by Gemini Live with expressive conversation, dynamic waveforms, and instant tools.","requestFramePermissions":["microphone"],"majorCapabilities":["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]}

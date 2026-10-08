@@ -1,0 +1,12 @@
+const base = 'http://127.0.0.1:3000';
+const crossOrigin = await fetch(base + '/api/system/session', { headers: { Origin: 'https://example.com' } });
+if (crossOrigin.status !== 403) throw new Error('Cross-origin request was not rejected');
+const session = await fetch(base + '/api/system/session').then((response) => response.json());
+const noToken = await fetch(base + '/api/system/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'unauthenticated', action: 'status', args: {} }) });
+if (noToken.status !== 403) throw new Error('Missing token was not rejected');
+const action = async (id, name, args) => fetch(base + '/api/system/action', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Sameera-Token': session.token }, body: JSON.stringify({ id, action: name, args }) }).then((response) => response.json());
+const status = await action('smoke-read-only-status', 'status', {});
+if (!status.success) throw new Error('Windows status failed');
+const missing = await action('smoke-missing-path', 'openFile', {});
+if (!missing.needsClarification) throw new Error('Missing path did not pause');
+console.log(JSON.stringify({ success: true, crossOriginRejected: true, tokenRequired: true, missingDetailsPause: true, volumeSupported: typeof status.volume === 'number', brightnessSupported: typeof status.brightness === 'number' }));

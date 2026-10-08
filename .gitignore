@@ -1,0 +1,13 @@
+node_modules/
+build/
+dist/
+coverage/
+.sameera-drafts/
+.system-actions-test-*/
+.antigravity/
+*.sameera-backup-*
+gmail-setup.jpg
+.DS_Store
+*.log
+.env*
+!.env.example
