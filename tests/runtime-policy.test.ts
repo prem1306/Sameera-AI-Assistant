@@ -3,12 +3,12 @@ import test from 'node:test';
 import { runtimePolicy, requestAllowed, toolsForMode } from '../src/services/RuntimePolicy.ts';
 import { isPublicAddress, fetchPublicPage } from '../src/services/PublicWeb.ts';
 
-test('hosted mode disables PC and Gmail tools even on Windows', () => {
+test('hosted mode disables PC, Gmail and MCP tools even on Windows', () => {
   assert.equal(runtimePolicy({ SAMEERA_MODE: 'web' }, 'win32').windowsControls, false);
   assert.equal(runtimePolicy({ SAMEERA_MODE: 'desktop' }, 'win32').gmailBridge, true);
   assert.equal(runtimePolicy({}, 'linux').mode, 'web');
   assert.throws(() => runtimePolicy({ SAMEERA_MODE: 'unknown' }));
-  assert.deepEqual(toolsForMode([{ name: 'performSystemAction' }, { name: 'draftGmailMail' }, { name: 'searchArticles' }], false), [{ name: 'searchArticles' }]);
+  assert.deepEqual(toolsForMode([{ name: 'performSystemAction' }, { name: 'draftGmailMail' }, { name: 'listConnectedTools' }, { name: 'callConnectedTool' }, { name: 'searchArticles' }], false), [{ name: 'searchArticles' }]);
 });
 test('public hosting accepts its own origin and rejects other origins', () => {
   assert.equal(requestAllowed('sameera.replit.app', 'https://sameera.replit.app', true, 3000), true);

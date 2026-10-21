@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Sameera Gmail</title>
+<html lang="en"><head><meta charset="utf-8"><title>Sameera Browser &amp; Gmail</title>
 <style>body{font:14px system-ui;background:#101426;color:#fff;width:300px;padding:16px}label,input,button{display:block;margin:12px 0;width:100%;box-sizing:border-box}input{padding:10px}button{padding:10px;cursor:pointer}p{line-height:1.5}#status{color:#a5f3fc}</style></head>
-<body><h2>Sameera Gmail</h2><p>Open one signed-in Gmail tab. Copy the pairing code from Sameera’s Browser &amp; Gmail setup.</p>
+<body><h2>Sameera Browser &amp; Gmail</h2><p>Open one signed-in Gmail tab. Copy the pairing code from Sameera’s Browser &amp; Gmail setup.</p>
 <label for="server">Sameera application</label><select id="server"><option value="http://127.0.0.1:3000">Web app</option><option value="http://127.0.0.1:3001">Windows desktop app</option></select>
 <label for="token">Pairing code</label><input id="token" type="password" autocomplete="off" spellcheck="false">
 <button id="connect">Connect</button><button id="disconnect">Disconnect</button><p id="status" role="status"></p>
-<p>The bridge handles plain-text drafts only. Sending needs approval in Sameera. Reconnect after restarting the server.</p><script src="popup.js"></script></body></html>
+<button id="grant">Allow current site</button><button id="read">Read this tab once</button><button id="revoke">Revoke current site</button><pre id="page" style="white-space:pre-wrap;max-height:300px;overflow:auto"></pre><p>The bridge handles plain-text drafts only. Sending needs approval in Sameera. Reconnect after restarting the server.</p><script type="module" src="popup.js"></script></body></html>

@@ -15,13 +15,13 @@ npm ci
 Copy-Item .env.example .env
 ```
 
-Set `GEMINI_API_KEY` in your local `.env`, then start the server:
+Set `GEMINI_API_KEY` in your local `.env`, then start the web development server:
 
 ```powershell
-npm run dev
+npm run dev:web
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and start a voice session. Allow microphone access when prompted. The server binds only to `127.0.0.1`; keep it local.
+Open [http://localhost:3000](http://localhost:3000) and start a voice session. Allow microphone access when prompted. For Windows controls, use the desktop launcher below. PC-control credentials are never available through a browser HTTP bootstrap.
 
 ## Windows desktop application
 

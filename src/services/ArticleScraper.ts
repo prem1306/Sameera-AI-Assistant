@@ -5,7 +5,7 @@
  */
 
 import * as cheerio from 'cheerio';
-import { fetchPublicPage } from './PublicWeb';
+import { fetchPublicPage } from './PublicWeb.ts';
 
 export interface ScrapedArticle {
   success: boolean;
@@ -99,7 +99,7 @@ export async function scrapeArticleOrWebpage(targetUrl: string): Promise<Scraped
       wordCount,
     };
   } catch (err: any) {
-    console.error('[ArticleScraper] Error:', err.message || err);
+    console.error('[ArticleScraper] Extraction failed');
     return {
       success: false,
       title: 'Could not load article',

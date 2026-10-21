@@ -1,3 +1,5 @@
+import { LocalActionClient } from './tools/LocalActionClient';
+import { runtimeCapabilities } from './RuntimeCapabilities';
 /**
  * LiveSession - Coordinates the full voice-to-voice bidirectional loop:
  * WebSocket connection, AudioStreamer (mic input), AudioPlayer (Gemini output),
@@ -100,8 +102,15 @@ export class LiveSession {
     }
   }
 
+  notifyAgent(id: string, disclosure = false): void {
+    if (this.isServerReady && this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: disclosure ? 'disclosureApproved' : 'agentStatus', id }));
+  }
+
   notifyGmailUpdated(): void {
     if (this.isServerReady && this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: 'gmailUpdated' }));
+  }
+  notifyMcpResult(id: string): void {
+    if (this.isServerReady && this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: 'mcpResult', id }));
   }
 
   /**
@@ -132,7 +141,7 @@ export class LiveSession {
 
     this.isIntentionalClose = false;
     this.reconnectAttempts = 0;
-    this.memoryContext = memoryContext || '';
+    this.memoryContext = ''; // Sharing memories needs a separate backend disclosure grant.
     if (language) this.language = language;
     this.setState('connecting');
 
@@ -162,20 +171,28 @@ export class LiveSession {
     }
   }
 
-  private connectWebSocket(): void {
+  private async connectWebSocket(): Promise<void> {
     if (this.isIntentionalClose) return;
     this.isServerReady = false;
     this.setState('connecting');
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const params = new URLSearchParams();
-    if (this.memoryContext) params.set('memory', this.memoryContext);
+
     if (this.language) params.set('lang', this.language);
     const query = params.toString() ? `?${params.toString()}` : '';
-    const wsUrl = `${protocol}//${window.location.host}/live${query}`;
-    console.log('[LiveSession] Connecting WebSocket to', wsUrl);
+    let wsUrl = `${protocol}//${window.location.host}/live${query}`;
+    console.log('[LiveSession] Connecting voice session');
 
     try {
+      const response = runtimeCapabilities.getSnapshot().windowsControls
+        ? await new LocalActionClient().request('/api/voice/session', { method: 'POST' })
+        : await fetch('/api/voice/session', { method: 'POST' });
+      if (!response.ok) throw new Error('Voice session authorization failed.');
+      const { ticket } = await response.json();
+      params.set('ticket', ticket);
+      wsUrl = `${protocol}//${window.location.host}/live?${params}`;
+      if (this.isIntentionalClose) return;
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
@@ -202,6 +219,9 @@ export class LiveSession {
               this.setState('listening');
               break;
 
+            case 'localProgress':
+              window.dispatchEvent(new CustomEvent('sameera-local-progress', { detail: String(msg.stage || '') }));
+              break;
             case 'audio':
               if (msg.data) {
                 if (this.state === 'thinking') {
@@ -230,6 +250,7 @@ export class LiveSession {
               break;
 
             case 'turnComplete':
+              window.dispatchEvent(new CustomEvent('sameera-local-progress', { detail: '' }));
               // Conversation turn completed - if not speaking, return to listening
               if (!this.audioPlayer.getIsSpeaking() && this.state !== 'disconnected') {
                 this.setState('listening');
@@ -242,10 +263,17 @@ export class LiveSession {
               }
               break;
 
+            case 'agentUpdate':
+              window.dispatchEvent(new Event('sameera-agent-update'));
+              break;
+            case 'mcpToolResult':
+              window.dispatchEvent(new Event(msg.requiresUserApproval ? 'sameera-mcp-review' : 'sameera-mcp-update'));
+              break;
+
             case 'toolCall':
               this.setState('thinking');
               if (msg.functionCalls && Array.isArray(msg.functionCalls)) {
-                console.log('[LiveSession] Handling tool call:', msg.functionCalls);
+                console.log('[LiveSession] Tool requests received');
                 const responses = await this.toolManager.executeToolCalls(msg.functionCalls);
                 if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                   this.ws.send(JSON.stringify({
@@ -262,12 +290,12 @@ export class LiveSession {
               break;
 
             case 'warning':
-              console.warn('[LiveSession] Server warning:', msg.message);
+              console.warn('[LiveSession] Server warning');
               this.onError?.(msg.message || 'Voice connection issue');
               break;
 
             case 'error':
-              console.error('[LiveSession] Server error message:', msg.message);
+              console.error('[LiveSession] Server error message');
               this.onError?.(msg.message || 'Voice connection issue');
               break;
 
@@ -296,8 +324,9 @@ export class LiveSession {
 
       this.ws.onclose = (event) => {
         this.isServerReady = false;
-        console.log('[LiveSession] WebSocket closed:', event.code, event.reason);
+        console.log('[LiveSession] WebSocket closed:', event.code);
         // Only stop if user intentionally clicked "End Call"
+        if (event.code === 1000 || event.code === 1008) { this.stop(); return; }
         if (!this.isIntentionalClose) {
           this.reconnect();
         }

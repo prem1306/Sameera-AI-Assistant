@@ -1,14 +1,50 @@
+# Dependencies and package caches
 node_modules/
+.pnp.*
+.pnpm-store/
+.npm/
+.yarn/cache/
+
+# Generated builds and reports
 build/
 dist/
 release/
 coverage/
+*.tsbuildinfo
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Personal runtime data and local tooling
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
 .sameera-drafts/
 .system-actions-test-*/
 .antigravity/
+.vercel/
 *.sameera-backup-*
 gmail-setup.jpg
+
+# Local archives and operating system files
+*.zip
+*.7z
+*.tar
+*.tar.gz
 .DS_Store
+Thumbs.db
 *.log
-.env*
-!.env.example

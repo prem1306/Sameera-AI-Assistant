@@ -26,3 +26,13 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+
+.agent-button { padding: .5rem .75rem; border: 1px solid #ffffff40; border-radius: .5rem; background: #162232; color: #f1f5f9; cursor: pointer; }
+.agent-button:hover { background: #24364a; }
+.agent-button:focus-visible,.agent-input:focus-visible { outline: 2px solid #67e8f9; outline-offset: 2px; }
+.agent-button:disabled { opacity: .5; cursor: not-allowed; }
+.agent-dialog { width: min(46rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; overflow: auto; padding: 1.5rem; background: #0f172a; color: #f1f5f9; border: 1px solid #ffffff40; border-radius: .75rem; font-size: .875rem; }
+.agent-dialog::backdrop { background: #000b; }
+.agent-review-notice { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; padding: .5rem .75rem; border: 1px solid #fbbf2480; border-radius: .5rem; background: #2b2310; color: #fef3c7; font-size: .875rem; }
+.agent-input { display: block; width: 100%; border: 1px solid #ffffff40; border-radius: .5rem; padding: .5rem; margin-top: .25rem; background: #020617; color: white; }
+.agent-json { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 20rem; overflow: auto; font-size: .75rem; padding: .75rem; background: #020617; }

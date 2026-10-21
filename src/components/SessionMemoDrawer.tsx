@@ -123,7 +123,7 @@ export const SessionMemoDrawer: React.FC<SessionMemoDrawerProps> = ({
                 </div>
                 <p className="text-sm font-medium text-white/70">No past conversation memories yet</p>
                 <p className="text-xs text-white/40 mt-1 max-w-xs leading-relaxed">
-                  Talk with Sameera about your projects, sports, hobbies, or day. When your session finishes, Sameera automatically retains key topics so she can recall them next time!
+                  Enable encrypted summaries in Agent privacy settings to retain selected topics after a session. Sharing those summaries with Google needs a separate review.
                 </p>
               </div>
             ) : (

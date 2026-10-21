@@ -1,11 +1,39 @@
 {
   "manifest_version": 3,
-  "name": "Sameera Gmail Bridge",
-  "version": "1.0.0",
-  "description": "Draft Gmail messages on explicit requests. Send only after Sameera's exact-message approval.",
-  "permissions": ["storage", "alarms"],
-  "host_permissions": ["http://127.0.0.1:3000/*", "http://127.0.0.1:3001/*", "https://mail.google.com/*"],
-  "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_popup": "popup.html", "default_title": "Connect Sameera Gmail" },
-  "content_scripts": [{ "matches": ["https://mail.google.com/mail/*"], "js": ["gmail.js"], "run_at": "document_idle" }]
+  "name": "Sameera Browser & Gmail Bridge",
+  "version": "1.1.0",
+  "description": "Read granted Chrome pages and control supported media. Gmail sending requires exact-message approval.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:3000/*",
+    "http://127.0.0.1:3001/*",
+    "https://mail.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Connect Sameera Gmail"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/mail/*"
+      ],
+      "js": [
+        "gmail.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ]
 }

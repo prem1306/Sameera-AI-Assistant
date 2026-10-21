@@ -1,7 +1,8 @@
 // Requires the local server. Never creates a compose window or sends email.
 import assert from 'node:assert/strict';
 const base = 'http://127.0.0.1:3000';
-const session = await fetch(base + '/api/system/session').then((response) => response.json());
+const session = { token: process.env.SAMEERA_DESKTOP_TOKEN };
+if (!session.token) throw new Error('Provide the out-of-band local test token.');
 const headers = { 'Content-Type': 'application/json', 'X-Sameera-Token': session.token };
 assert.equal((await fetch(base + '/api/mail/state')).status, 403);
 assert.equal((await fetch(base + '/api/mail/pair', { headers: { ...headers, Origin: 'https://example.com' } })).status, 403);

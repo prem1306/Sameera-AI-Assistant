@@ -1,7 +1,8 @@
 const base = 'http://127.0.0.1:3000';
 const crossOrigin = await fetch(base + '/api/system/session', { headers: { Origin: 'https://example.com' } });
 if (crossOrigin.status !== 403) throw new Error('Cross-origin request was not rejected');
-const session = await fetch(base + '/api/system/session').then((response) => response.json());
+const session = { token: process.env.SAMEERA_DESKTOP_TOKEN };
+if (!session.token) throw new Error('Provide the out-of-band local test token.');
 const noToken = await fetch(base + '/api/system/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'unauthenticated', action: 'status', args: {} }) });
 if (noToken.status !== 403) throw new Error('Missing token was not rejected');
 const action = async (id, name, args) => fetch(base + '/api/system/action', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Sameera-Token': session.token }, body: JSON.stringify({ id, action: name, args }) }).then((response) => response.json());

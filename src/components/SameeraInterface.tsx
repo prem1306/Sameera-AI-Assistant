@@ -1,11 +1,14 @@
+import { AgentPanel } from './agent/AgentPanel';
+import { LanguageSelector } from './LanguageSelector';
+import { HelpModal } from './HelpModal';
 /**
  * SameeraInterface - Futuristic dark glassmorphic interface for Sameera voice AI assistant.
  * Pure voice-to-voice interaction (NO text chat interface), central animated power/mic button,
  * dynamic audio-reactive visuals, live mic volume meter, ethereal speech bubbles, and instant tool actions.
  */
 
-import React, { useState, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
-import { runtimeCapabilities } from '../services/RuntimeCapabilities';
+import React, { useEffect, useState } from 'react';
+import { useAssistantSession } from '../hooks/useAssistantSession';
 import {
   Mic,
   MicOff,
@@ -20,14 +23,9 @@ import {
   UserCheck,
   RotateCw,
 } from 'lucide-react';
-import { AssistantState, VisualTheme, VisualizerMode, ToolExecutionEvent, MediaViewerState, ArticleReaderState, ArticleSearchState } from '../types/assistant';
-import { AudioPlayer } from '../services/AudioPlayer';
-import { AudioStreamer } from '../services/AudioStreamer';
-import { ToolManager } from '../services/ToolManager';
-import { LiveSession } from '../services/LiveSession';
-import { StateManager, AppState } from '../services/StateManager';
+import type { VisualizerMode } from '../types/assistant';
 import { THEMES } from '../utils/themeStyles';
-import { EMOTION_PALETTES, detectEmotionalState } from '../utils/emotionAnalyzer';
+import { EMOTION_PALETTES } from '../utils/emotionAnalyzer';
 import { DynamicVisualizer } from './DynamicVisualizer';
 import { ToolActionToast } from './ToolActionToast';
 import { SessionMemoDrawer } from './SessionMemoDrawer';
@@ -37,134 +35,27 @@ import { InAppMediaModal } from './InAppMediaModal';
 import { ArticleReaderModal } from './ArticleReaderModal';
 import { ArticleSourcesModal } from './ArticleSourcesModal';
 import { GmailPanel } from './GmailPanel';
+import { ConnectionsPanel } from './connections/ConnectionsPanel';
 
 export const SameeraInterface: React.FC = () => {
-  const capabilities = useSyncExternalStore(runtimeCapabilities.subscribe, runtimeCapabilities.getSnapshot);
-  useEffect(() => { void runtimeCapabilities.load(); }, []);
-  // Instantiate singleton services
-  const streamer = useMemo(() => new AudioStreamer(), []);
-  const player = useMemo(() => new AudioPlayer(), []);
-  const toolManager = useMemo(() => new ToolManager(), []);
-  const stateManager = useMemo(() => new StateManager(), []);
-  const liveSession = useMemo(
-    () => new LiveSession(streamer, player, toolManager),
-    [streamer, player, toolManager]
-  );
+  const {
+    capabilities, streamer, player, toolManager, stateManager, liveSession, appState,
+    contextNotification, showContextNotification, currentToolEvent, setCurrentToolEvent,
+    mediaViewer, setMediaViewer, articleReader, setArticleReader, articleSearch, setArticleSearch,
+    micAudioLevel, liveCaption, handleToggleConnection, handleToggleMute,
+  } = useAssistantSession();
+  const [persona, setPersona] = useState('companion');
+  const [localProgress, setLocalProgress] = useState('');
   useEffect(() => {
-    const notify = () => liveSession.notifyGmailUpdated();
-    window.addEventListener('sameera-mail-result', notify);
-    return () => window.removeEventListener('sameera-mail-result', notify);
-  }, [liveSession]);
-
-  // Observable state
-  const [appState, setAppState] = useState<AppState>(stateManager.getState());
+    const changed = (event: Event) => setPersona((event as CustomEvent<string>).detail);
+    const progress = (event: Event) => setLocalProgress((event as CustomEvent<string>).detail);
+    window.addEventListener('sameera-persona', changed); window.addEventListener('sameera-local-progress', progress);
+    return () => { window.removeEventListener('sameera-persona', changed); window.removeEventListener('sameera-local-progress', progress); };
+  }, []);
   const [isMemoOpen, setIsMemoOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
-  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
-  const [contextNotification, setContextNotification] = useState<string | null>(null);
-  const [currentToolEvent, setCurrentToolEvent] = useState<ToolExecutionEvent | null>(null);
-  const [mediaViewer, setMediaViewer] = useState<MediaViewerState | null>(null);
-  const [articleReader, setArticleReader] = useState<ArticleReaderState | null>(null);
-  const [articleSearch, setArticleSearch] = useState<ArticleSearchState | null>(null);
-
-  // Live mic meter & spoken captions
-  const [micAudioLevel, setMicAudioLevel] = useState<number>(0);
-  const [liveCaption, setLiveCaption] = useState<{ role: 'user' | 'assistant'; text: string } | null>(null);
-  const captionTimeoutRef = useRef<any>(null);
-
-  // Subscribe to StateManager
-  useEffect(() => {
-    const unsubscribe = stateManager.subscribe((newState) => {
-      setAppState(newState);
-    });
-    return unsubscribe;
-  }, [stateManager]);
-
-  // Wire LiveSession & ToolManager callbacks
-  useEffect(() => {
-    liveSession.onStateChange = (state) => {
-      stateManager.setAssistantState(state);
-    };
-
-    liveSession.onError = (errorMsg) => {
-      stateManager.setErrorMessage(errorMsg);
-    };
-
-    liveSession.onContextRefreshed = () => {
-      setContextNotification(
-        stateManager.getLanguage() === 'telugu'
-          ? 'సంభాషణ సందర్భం స్వయంచాలకంగా తాజాకరించబడింది'
-          : 'Context smoothly compacted & re-anchored'
-      );
-      setTimeout(() => setContextNotification(null), 4000);
-    };
-
-    liveSession.onTranscription = ({ role, text }) => {
-      setLiveCaption((prev) => {
-        if (prev && prev.role === role) {
-          return { role, text: prev.text + ' ' + text };
-        }
-        return { role, text };
-      });
-
-      // Predict emotional state dynamically from Sameera's speech
-      if (role === 'assistant' && text) {
-        const nextEmotion = detectEmotionalState(text, stateManager.getState().emotionalState);
-        stateManager.setEmotionalState(nextEmotion);
-      }
-
-      // Record dialogue turn into active session buffer for local memory persistence
-      stateManager.recordDialogueTurn(role, text);
-
-      if (captionTimeoutRef.current) {
-        clearTimeout(captionTimeoutRef.current);
-      }
-      captionTimeoutRef.current = setTimeout(() => {
-        setLiveCaption(null);
-      }, 7000);
-    };
-
-    toolManager.setCallbacks({
-      onToolEvent: (event) => {
-        stateManager.setLastToolEvent(event);
-        setCurrentToolEvent(event);
-      },
-      onThemeChange: (theme) => {
-        stateManager.setVisualTheme(theme);
-      },
-      onNotesChange: (notes) => {
-        stateManager.setNotes(notes);
-      },
-      onMediaOpen: (media) => {
-        setMediaViewer(media);
-      },
-      onArticleReader: (reader) => {
-        setArticleReader(reader);
-        setArticleSearch(null);
-      },
-      onArticleSearch: setArticleSearch,
-    });
-
-    stateManager.setNotes(toolManager.getNotes());
-
-    // Live volume polling for UI meter
-    const meterInterval = setInterval(() => {
-      if (streamer.getIsStreaming()) {
-        setMicAudioLevel(streamer.getAudioLevel());
-      } else {
-        setMicAudioLevel(0);
-      }
-    }, 100);
-
-    return () => {
-      clearInterval(meterInterval);
-      if (captionTimeoutRef.current) clearTimeout(captionTimeoutRef.current);
-      liveSession.stop();
-      player.destroy();
-    };
-  }, [liveSession, toolManager, stateManager, streamer, player]);
 
   const {
     assistantState,
@@ -180,39 +71,6 @@ export const SameeraInterface: React.FC = () => {
 
   const currentTheme = THEMES[visualTheme] || THEMES['midnight-violet'];
   const currentEmotion = EMOTION_PALETTES[emotionalState || 'neutral'];
-
-  // Toggle session connection
-  const handleToggleConnection = async () => {
-    if (!capabilities.ready) {
-      stateManager.setErrorMessage('Features are still loading. Please try again in a moment.');
-      void runtimeCapabilities.load();
-      return;
-    }
-    stateManager.setErrorMessage(null);
-
-    if (assistantState === 'disconnected') {
-      try {
-        // Unlock Web Audio immediately within the synchronous click gesture!
-        await liveSession.unlockAudio();
-        // Load formatted previous conversation memories from LocalStorage
-        const memoryContext = stateManager.getFormattedMemoryContext();
-        await liveSession.start(memoryContext, language);
-      } catch (err: any) {
-        stateManager.setErrorMessage(
-          err?.message || 'Failed to start session. Please allow microphone access.'
-        );
-      }
-    } else {
-      liveSession.stop();
-    }
-  };
-
-  // Toggle microphone mute
-  const handleToggleMute = () => {
-    const nextMuted = !isMuted;
-    liveSession.setMuted(nextMuted);
-    stateManager.setIsMuted(nextMuted);
-  };
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -307,7 +165,7 @@ export const SameeraInterface: React.FC = () => {
               )}
             </div>
             <p className="text-[11px] text-white/50 tracking-wide">
-              Witty • Charming • Expressive
+              {persona === 'butler' ? 'Calm • Professional • Precise' : 'Witty • Charming • Expressive'}
             </p>
           </div>
         </div>
@@ -357,70 +215,7 @@ export const SameeraInterface: React.FC = () => {
 
         {/* Right Action Icons */}
         <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Quick Language Toggle & Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-gradient-to-r from-cyan-500/15 to-violet-500/15 hover:from-cyan-500/25 hover:to-violet-500/25 backdrop-blur-xl border border-cyan-400/30 text-white transition-all text-xs font-semibold shadow-sm"
-              title="Select Language: Telugu (తెలుగు), Bilingual, English"
-              aria-label="Select voice language"
-              aria-expanded={isLangMenuOpen}
-              aria-controls="voice-language-options"
-            >
-              <span>{language === 'telugu' ? '🇮🇳' : language === 'bilingual' ? '🌐' : '🇬🇧'}</span>
-              <span className="font-['Space_Grotesk']">
-                {language === 'telugu' ? 'తెలుగు' : language === 'bilingual' ? 'ద్వంద్వ (Bilingual)' : 'English'}
-              </span>
-              <span className="text-[10px] text-white/50">▼</span>
-            </button>
-
-            {/* Language Selection Dropdown Menu */}
-            {isLangMenuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setIsLangMenuOpen(false)}
-                />
-                <div id="voice-language-options" aria-label="Voice languages" onKeyDown={(event) => { if (event.key === 'Escape') setIsLangMenuOpen(false); }} className="absolute right-0 mt-2 w-64 p-2 rounded-2xl bg-slate-950/95 backdrop-blur-2xl border border-white/20 shadow-2xl z-50 space-y-1 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider text-white/40 border-b border-white/10 mb-1">
-                    Select Voice Language
-                  </div>
-                  {[
-                    { id: 'telugu', label: 'తెలుగు (Telugu)', sub: 'పూర్తి తెలుగు సంభాషణ', flag: '🇮🇳' },
-                    { id: 'bilingual', label: 'ద్వంద్వ (Bilingual)', sub: 'Telugu + English (Tenglish)', flag: '🌐' },
-                    { id: 'english', label: 'English', sub: 'Global English voice', flag: '🇬🇧' },
-                  ].map((opt) => {
-                    const isSelected = language === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        aria-pressed={isSelected}
-                        onClick={() => {
-                          stateManager.setLanguage(opt.id as any);
-                          liveSession.setLanguage(opt.id as any);
-                          setIsLangMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all ${
-                          isSelected
-                            ? 'bg-gradient-to-r from-cyan-500/20 to-violet-500/20 text-white font-medium border border-cyan-400/40 shadow-sm'
-                            : 'hover:bg-white/10 text-white/80'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-base">{opt.flag}</span>
-                          <div>
-                            <div className="text-xs font-semibold">{opt.label}</div>
-                            <div className="text-[10px] text-white/50">{opt.sub}</div>
-                          </div>
-                        </div>
-                        {isSelected && <span className="text-cyan-400 text-xs">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
+          <LanguageSelector language={language} onSelect={value => { stateManager.setLanguage(value); liveSession.setLanguage(value); }} />
 
           <button
             onClick={() => setIsMemoOpen(true)}
@@ -440,12 +235,11 @@ export const SameeraInterface: React.FC = () => {
             <button
               onClick={() => {
                 liveSession.refreshContext();
-                setContextNotification(
+                showContextNotification(
                   language === 'telugu'
                     ? 'సందర్భం రీసెట్ చేయబడుతోంది...'
-                    : 'Re-anchoring conversation context...'
+                    : 'Re-anchoring conversation context...', 3500
                 );
-                setTimeout(() => setContextNotification(null), 3500);
               }}
               className="p-2.5 rounded-2xl bg-cyan-500/15 hover:bg-cyan-500/25 backdrop-blur-xl border border-cyan-400/30 text-cyan-300 hover:text-cyan-200 transition-all shadow-sm"
               title={
@@ -468,6 +262,8 @@ export const SameeraInterface: React.FC = () => {
 
           {/* Audio Diagnostics HUD */}
           {capabilities.gmailBridge && <GmailPanel />}
+          {localProgress && <span role="status" className="text-xs text-cyan-200">{localProgress}</span>}
+          {capabilities.windowsControls && <ConnectionsPanel onResult={id => liveSession.notifyMcpResult(id)} />}
           <button
             onClick={() => setIsDiagnosticOpen(true)}
             className="p-2.5 rounded-2xl bg-white/[0.07] hover:bg-white/[0.12] backdrop-blur-xl border border-white/15 text-cyan-400 hover:text-cyan-300 transition-all"
@@ -485,6 +281,7 @@ export const SameeraInterface: React.FC = () => {
           </button>
         </div>
       </header>
+      {capabilities.windowsControls && <div className="relative z-40 px-5 sm:px-8 flex flex-wrap items-center gap-3"><AgentPanel liveSession={liveSession} stateManager={stateManager} player={player} /></div>}
       <p className="relative z-10 text-center text-xs text-white/50 px-5" role="status">
         {capabilities.ready ? (capabilities.windowsControls
           ? 'Windows application · Voice & web · Apps & files · PC controls · Gmail bridge'
@@ -499,7 +296,7 @@ export const SameeraInterface: React.FC = () => {
             <span>{contextNotification}</span>
           </div>
           <button
-            onClick={() => setContextNotification(null)}
+            onClick={() => showContextNotification(null)}
             className="text-cyan-400/70 hover:text-cyan-200"
           >
             ✕
@@ -705,8 +502,8 @@ export const SameeraInterface: React.FC = () => {
                     'Hey Sameera, what can you do?',
                     'Open YouTube lo-fi beats',
                     'Read an article for me',
-                    'Set speaker volume to 35 percent',
-                    'Open my report in Word',
+                    capabilities.windowsControls ? 'Set speaker volume to 35 percent' : 'Tell me a short story',
+                    capabilities.windowsControls ? 'Open my report in Word' : 'Explain this article to me',
                   ]
               ).map((suggestion, idx) => (
                 <span
@@ -880,100 +677,7 @@ export const SameeraInterface: React.FC = () => {
       />
 
       {/* Help & Capabilities Modal */}
-      {isHelpOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="fixed inset-0 bg-black/75 backdrop-blur-md"
-            onClick={() => setIsHelpOpen(false)}
-          />
-          <div className="relative w-full max-w-lg bg-slate-950/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-6 shadow-2xl z-10 space-y-5 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
-                  <Radio className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-white">About Sameera</h3>
-                  <p className="text-xs text-white/50">Your charming real-time conversational AI</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsHelpOpen(false)}
-                className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs text-white/80 leading-relaxed">
-              <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 space-y-1">
-                <h4 className="font-semibold text-cyan-300 text-sm flex items-center gap-1.5">
-                  <UserCheck className="w-4 h-4 text-cyan-400" />
-                  Roommate & Side-Chatter Silence Filter
-                </h4>
-                <p className="text-white/70">
-                  When your friends or roommate talk to you or each other in the room (e.g., asking for keys or food), Sameera stays <strong>100% completely silent</strong>. She will never interrupt your real-world conversations! Once you finish, just say <strong className="text-white">&ldquo;Hey Sameera&rdquo;</strong> (or <strong className="text-white">&ldquo;హే సమీరా&rdquo;</strong> in Telugu) to resume chatting right where you left off.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-violet-500/10 border border-violet-500/20 space-y-1">
-                <h4 className="font-semibold text-violet-300 text-sm flex items-center gap-1.5">
-                  <span>🇮🇳</span>
-                  Telugu & Bilingual Language Modes (తెలుగు భాష)
-                </h4>
-                <p className="text-white/70">
-                  Switch between <strong>తెలుగు (Telugu)</strong>, <strong>ద్వంద్వ (Bilingual / Tenglish)</strong>, and <strong>English</strong> anytime with the top language menu. Sameera speaks warm, natural spoken Telugu, understands Telugu YouTube song requests, and reads Telugu articles aloud!
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-1">
-                <h4 className="font-semibold text-emerald-300 text-sm flex items-center gap-1.5">
-                  <Activity className="w-4 h-4 text-emerald-400" />
-                  Continuous Stability & Speech Booster
-                </h4>
-                <p className="text-white/70">
-                  Includes low-latency jitter buffering so Sameera&apos;s voice never breaks down or stutters during extended conversations, plus an acoustic voice booster that picks up your microphone effortlessly even at conversational distance.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
-                <h4 className="font-semibold text-white text-sm">Real-time Browser Actions</h4>
-                <ul className="space-y-1.5 text-white/60">
-                  <li>• <strong className="text-white">Open YouTube Videos:</strong> &ldquo;Open YouTube lo-fi beats&rdquo; or &ldquo;Open MrBeast on YouTube&rdquo; to launch the video player on your screen.</li>
-                  <li>• <strong className="text-white">Read Articles & Novels:</strong> &ldquo;Read this article for me: [link]&rdquo; or &ldquo;Read chapter 1 of this story&rdquo; and Sameera will open reader mode and read it aloud with her expressive voice!</li>
-                  <li>• <strong className="text-white">Open Websites:</strong> &ldquo;Sameera, open Wikipedia&rdquo; or GitHub, etc.</li>
-                  <li>• <strong className="text-white">Web Search:</strong> &ldquo;Search Google for today&apos;s tech news.&rdquo;</li>
-                  <li>• <strong className="text-white">Date & Time:</strong> &ldquo;What time and day is it?&rdquo;</li>
-                  <li>• <strong className="text-white">Change Theme:</strong> &ldquo;Sameera, switch theme to Cyberpunk or Emerald.&rdquo;</li>
-                  <li>• <strong className="text-white">Take Notes:</strong> &ldquo;Take a note to call Alex tomorrow at 10.&rdquo;</li>
-                </ul>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10">
-                <h4 className="font-semibold text-white text-sm mb-1">{capabilities.windowsControls ? 'Windows Computer Actions' : 'Sameera on the Web'}</h4>
-                {capabilities.windowsControls ? <>
-                  <p className="text-white/60">Ask Sameera to open or close an installed app by name, manage files, adjust volume, or create a Notepad working draft. Closing an app preserves its save prompts. She asks when a command needs clarification.</p>
-                  <p className="text-white/60 mt-2">For Gmail in Chrome, connect the Gmail bridge. Drafting and sending are separate requests; sending requires your click on the exact-message approval preview.</p>
-                </> : <p className="text-white/60">Talk with Sameera, search the web, read articles, watch videos, and take browser notes. To control installed apps, files, or PC settings, use Sameera for Windows.</p>}
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10">
-                <h4 className="font-semibold text-white text-sm mb-1">Natural Interruptions</h4>
-                <p className="text-white/60">
-                  You never have to wait for Sameera to finish speaking. Whenever you start talking, she will stop immediately and listen to you.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsHelpOpen(false)}
-              className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-medium text-sm transition-all"
-            >
-              Got it, let&apos;s talk!
-            </button>
-          </div>
-        </div>
-      )}
+      <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} capabilities={capabilities} />
     </div>
   );
 };

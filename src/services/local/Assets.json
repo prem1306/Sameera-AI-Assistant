@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "files": [
+    {
+      "name": "whisper.zip",
+      "url": "https://github.com/ggml-org/whisper.cpp/releases/download/b5454/whisper-bin-x64.zip",
+      "sha256": "6ba69e3482d7826214f90a6a9c84ca07782aec1e1d0c6a7c30c994fd5d816ccb",
+      "kind": "whisper"
+    },
+    {
+      "name": "ollama.zip",
+      "url": "https://github.com/ollama/ollama/releases/download/v0.40.2/ollama-windows-amd64.zip",
+      "sha256": "e29ad1d5063dd4b54b2492d9b00adab2cff9621bfa654b6c92aa8d6f1fdfe7fc",
+      "kind": "ollama"
+    },
+    {
+      "name": "python.zip",
+      "url": "https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip",
+      "kind": "python",
+      "sha256": "009d6bf7e3b2ddca3d784fa09f90fe54336d5b60f0e0f305c37f400bf83cfd3b"
+    },
+    {
+      "name": "pip.whl",
+      "url": "https://files.pythonhosted.org/packages/c9/bc/b7db44f5f39f9d0494071bddae6880eb645970366d0a200022a1a93d57f5/pip-25.0.1-py3-none-any.whl",
+      "sha256": "c46efd13b6aa8279f33f2864459c8ce587ea6a1a59ee20de055868d8f7688f7f",
+      "kind": "pip"
+    },
+    {
+      "name": "ggml-small.bin",
+      "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-small.bin",
+      "sha256": "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b",
+      "kind": "model"
+    },
+    {
+      "name": "qwen3.gguf",
+      "url": "https://registry.ollama.ai/v2/library/qwen3/blobs/sha256:3e4cb14174460404e7a233e531675303b2fbf7749c02f91864fe311ab6344e4f",
+      "sha256": "3e4cb14174460404e7a233e531675303b2fbf7749c02f91864fe311ab6344e4f",
+      "kind": "model"
+    },
+    {
+      "name": "qwen-template.txt",
+      "url": "https://registry.ollama.ai/v2/library/qwen3/blobs/sha256:2d54db2b9bb29ce7db54fea63a891f5859603813c555b1f88b5e0994652897f9",
+      "sha256": "2d54db2b9bb29ce7db54fea63a891f5859603813c555b1f88b5e0994652897f9",
+      "kind": "model"
+    },
+    {
+      "name": "indic/config.json",
+      "url": "https://huggingface.co/ai4bharat/indic-parler-tts/resolve/660bc53c64ae83150613264111708a0465211237/config.json",
+      "gitBlob": "16b7203d25b7827bf0d3cd2eca43f687638866f1",
+      "gated": true,
+      "kind": "model"
+    },
+    {
+      "name": "indic/generation_config.json",
+      "url": "https://huggingface.co/ai4bharat/indic-parler-tts/resolve/660bc53c64ae83150613264111708a0465211237/generation_config.json",
+      "gitBlob": "317ab0c2dcb070d9c6b6de9a8bfaea506311c49f",
+      "gated": true,
+      "kind": "model"
+    },
+    {
+      "name": "indic/model.safetensors",
+      "url": "https://huggingface.co/ai4bharat/indic-parler-tts/resolve/660bc53c64ae83150613264111708a0465211237/model.safetensors",
+      "sha256": "c68daecb60f80c8f1faf0a6d2e6ddd6de8e224fb19750f3e9a33bca43c552c90",
+      "gated": true,
+      "kind": "model"
+    },
+    {
+      "name": "indic/preprocessor_config.json",
+      "url": "https://huggingface.co/ai4bharat/indic-parler-tts/resolve/660bc53c64ae83150613264111708a0465211237/preprocessor_config.json",
+      "gitBlob": "6a86814ebf860588057d969d67d7a3e1adacf636",
+      "gated": true,
+      "kind": "model"
+    },
+    {
+      "name": "indic/special_tokens_map.json",
+      "url": "https://huggingface.co/ai4bharat/indic-parler-tts/resolve/660bc53c64ae83150613264111708a0465211237/special_tokens_map.json",
+      "gitBlob": "8bedc05a6476080d7f473a9da72394f2cee48340",
+      "gated": true,
+      "kind": "model"
+    },
+    {
+      "name": "indic/tokenizer.json",
+      "url": "https://huggingface.co/ai4bharat/indic-parler-tts/resolve/660bc53c64ae83150613264111708a0465211237/tokenizer.json",
+      "gitBlob": "4e69255622d209ad444a019a340bfbab4a602fb5",
+      "gated": true,
+      "kind": "model"
+    },
+    {
+      "name": "indic/tokenizer.model",
+      "url": "https://huggingface.co/ai4bharat/indic-parler-tts/resolve/660bc53c64ae83150613264111708a0465211237/tokenizer.model",
+      "sha256": "bc8fa773221597d09cfadb23a2b1bd717488a0481505469ea56d42cb044de9b5",
+      "gated": true,
+      "kind": "model"
+    },
+    {
+      "name": "indic/tokenizer_config.json",
+      "url": "https://huggingface.co/ai4bharat/indic-parler-tts/resolve/660bc53c64ae83150613264111708a0465211237/tokenizer_config.json",
+      "gitBlob": "77573bd5e710bb4ceca8d2947788a9bd6d4d75de",
+      "gated": true,
+      "kind": "model"
+    },
+    {
+      "name": "description/config.json",
+      "url": "https://huggingface.co/google/mt5-base/resolve/2eb15465c5dd7f72a8f7984306ad05ebc3dd1e1f/config.json",
+      "gitBlob": "c95011e03b3db1efed3065a7b90884f77f98fc10",
+      "gated": false,
+      "kind": "model"
+    },
+    {
+      "name": "description/spiece.model",
+      "url": "https://huggingface.co/google/mt5-base/resolve/2eb15465c5dd7f72a8f7984306ad05ebc3dd1e1f/spiece.model",
+      "gitBlob": "26a2a78808e998e45d2e0c184265897e6695b914",
+      "gated": false,
+      "kind": "model"
+    },
+    {
+      "name": "description/tokenizer_config.json",
+      "url": "https://huggingface.co/google/mt5-base/resolve/2eb15465c5dd7f72a8f7984306ad05ebc3dd1e1f/tokenizer_config.json",
+      "gitBlob": "712e82c8fde9e07d534178c2dfbdd063572d00c4",
+      "gated": false,
+      "kind": "model"
+    }
+  ]
+}

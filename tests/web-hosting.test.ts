@@ -5,14 +5,14 @@ import { once } from 'node:events';
 import { WebSocket } from 'ws';
 import http from 'node:http';
 
-function get(url: string, headers: Record<string, string> = {}): Promise<{ status: number; json: () => any }> {
+function get(url: string, headers: Record<string, string> = {}, method = 'GET'): Promise<{ status: number; json: () => any }> {
   return new Promise((resolve, reject) => {
-    http.get(url, { headers }, (response) => {
+    http.request(url, { headers, method }, (response) => {
       let body = '';
       response.on('data', (chunk) => { body += chunk; });
       response.on('end', () => resolve({ status: response.statusCode!, json: () => JSON.parse(body) }));
       response.on('error', reject);
-    }).on('error', reject);
+    }).on('error', reject).end();
   });
 }
 
@@ -32,13 +32,17 @@ test('production web server serves public host while rejecting Windows routes an
     assert.equal(caps.windowsControls, false);
     assert.equal(caps.gmailBridge, false);
     assert.equal((await get(`http://127.0.0.1:${port}/`, headers)).status, 200);
-    for (const route of ['/api/system/session', '/api/mail/status', '/api/browser/next']) assert.equal((await get(`http://127.0.0.1:${port}${route}`, headers)).status, 403);
+    for (const route of ['/api/system/session', '/api/mail/state', '/api/mail/pair', '/api/browser/next', '/api/mcp/catalog']) assert.equal((await get(`http://127.0.0.1:${port}${route}`, headers)).status, 403);
     assert.equal((await get(`http://127.0.0.1:${port}/api/capabilities`, { ...headers, Origin: 'https://evil.test' })).status, 403);
     const rejected = new WebSocket(`ws://127.0.0.1:${port}/live`, { headers: { ...headers, Origin: 'https://evil.test' } });
     await once(rejected, 'error');
-    const accepted = new WebSocket(`ws://127.0.0.1:${port}/live`, { headers });
+    const noTicket = new WebSocket(`ws://127.0.0.1:${port}/live`, { headers }); await once(noTicket, 'error');
+    const ticketResponse = await get(`http://127.0.0.1:${port}/api/voice/session`, headers, 'POST');
+    assert.equal(ticketResponse.status, 200); const { ticket } = await ticketResponse.json();
+    const accepted = new WebSocket(`ws://127.0.0.1:${port}/live?ticket=${ticket}`, { headers });
     await once(accepted, 'open');
     accepted.close();
+    const replay = new WebSocket(`ws://127.0.0.1:${port}/live?ticket=${ticket}`, { headers }); await once(replay, 'error');
   } finally {
     const exited = once(child, 'exit');
     child.kill();

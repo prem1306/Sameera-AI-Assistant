@@ -1,3 +1,4 @@
+import { runBrowserJob } from './browser.js';
 let busy = false;
 let timer;
 const drafts = new Map();
@@ -66,6 +67,15 @@ async function poll() {
       try { result = await run(job); }
       catch { result = pause(job.action === 'send' ? 'Gmail send could not be confirmed. Check Sent; do not retry automatically.' : 'The Gmail page could not be controlled. Please check it before retrying.'); }
       await fetch(base + '/api/browser/result', { method: 'POST', headers, body: JSON.stringify({ id: job.id, result }), signal: AbortSignal.timeout(4000) });
+    }
+    const agentResponse = await fetch(base + '/api/browser/agent-next', { method: 'POST', headers, body: '{}', signal: AbortSignal.timeout(4000) });
+    if (agentResponse.ok) {
+      const { job: agentJob } = await agentResponse.json();
+      if (agentJob) {
+        let result;
+        try { result = await runBrowserJob(agentJob); } catch { result = { success: false, error: 'Chrome access failed. Check tab permissions, sign-in and current page.' }; }
+        await fetch(base + '/api/browser/agent-result', { method: 'POST', headers, body: JSON.stringify({ id: agentJob.id, result }), signal: AbortSignal.timeout(4000) });
+      }
     }
   } catch { await chrome.action.setBadgeText({ text: '!' }); }
   finally { busy = false; }

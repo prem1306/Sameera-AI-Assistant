@@ -18,9 +18,9 @@ Examples:
 
 The assistant must ask when an amount, location, matching file/video, replacement scope, missing parent folder, or destination conflict is unresolved. Dependent actions in the same tool batch stop after such a question. Existing text files require a current version hash, and edits preserve an undo copy alongside the original. Word text changes use the installed Word application and preserve surrounding formatting; unsaved changes and protected documents cause a pause.
 
-Supported operations: file/folder listing and bounded name searches, small UTF-8 text files, exact text replacements, new folders, copies, moves, renames, Recycle Bin deletion, opening supported files, Chrome URLs, default audio-output volume, compatible-display brightness, and Word read/replace/append. Arbitrary shell commands, credentials, Windows/program folders, application data, links/junctions, permanent deletion, and unspecified fallbacks are unavailable.
+Supported operations: file/folder listing and bounded name searches, small UTF-8 .txt/.md/.csv/.json/.yaml files, exact text replacements, new folders, copies, moves, renames, Recycle Bin deletion, opening supported files, Chrome URLs, default audio-output volume, compatible-display brightness, and Word read/replace/append. File tools refuse executable/script/installer/shortcut source or destination types for copy, move and rename; text editing cannot create or edit script files. Cross-drive moves stop without a copy/delete fallback. Arbitrary shell commands, credentials, Windows/program folders, application data, links/junctions, permanent deletion, and unspecified fallbacks are unavailable.
 
-The server binds only to 127.0.0.1. Host/origin checks and a per-server browser-session token protect the action endpoint. Keep it local; do not expose this process through a public tunnel. Model interpretation is still fallible: use exact names, paths, text, and amounts for commands that change files.
+The desktop server binds only to 127.0.0.1. Host/origin checks and a session token provisioned through the trusted desktop launcher protect the action endpoint. HTTP never distributes that token. Keep it local; do not expose this process through a public tunnel. Model interpretation is still fallible: use exact names, paths, text, and amounts for commands that change files.
 
 ## Notepad and applications
 

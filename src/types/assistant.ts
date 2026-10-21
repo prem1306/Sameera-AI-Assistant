@@ -6,7 +6,7 @@ export type AssistantState = 'disconnected' | 'connecting' | 'listening' | 'thin
 
 export type EmotionalState = 'neutral' | 'playful' | 'curious' | 'empathetic' | 'excited';
 
-export type LanguageMode = 'english' | 'telugu' | 'bilingual';
+export type LanguageMode = import('../services/session/Preferences').Language;
 
 export type VisualizerMode = 'orb' | 'waveform' | 'nebula' | 'frequency-ring';
 

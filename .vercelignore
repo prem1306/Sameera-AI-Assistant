@@ -1,0 +1,14 @@
+.env
+.env.*
+.sameera-drafts
+.antigravity
+node_modules
+build
+dist
+release
+desktop
+chrome-extension
+.git
+gmail-setup.jpg
+*.log
+*.sameera-backup-*

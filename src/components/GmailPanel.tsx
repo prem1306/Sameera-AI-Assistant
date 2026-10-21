@@ -1,3 +1,4 @@
+import { desktopSessionToken } from '../services/tools/DesktopSession';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { MailDraft } from '../services/GmailBridge';
 
@@ -13,7 +14,7 @@ export function GmailPanel() {
   const [showSetup, setShowSetup] = useState(false);
 
   const api = useCallback(async (url: string, body?: unknown) => {
-    if (!token.current) token.current = (await fetch('/api/system/session', { cache: 'no-store' }).then((response) => response.json())).token;
+    if (!token.current) token.current = await desktopSessionToken();
     const response = await fetch(url, { method: body === undefined ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json', 'X-Sameera-Token': token.current }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(30000) });
     if (response.status === 403) { token.current = ''; throw new Error('The server restarted. Please refresh Sameera.'); }
     if (!response.ok) throw new Error('Gmail setup is unavailable. Check the local server.');

@@ -1,3 +1,4 @@
+import { validLanguage } from './session/Preferences';
 /**
  * StateManager - Central observable store for Sameera assistant state,
  * theme management, active notes, audio reactive events,
@@ -54,6 +55,9 @@ export class StateManager {
     sessionDuration: 0,
   };
 
+  memoryEnabled = false;
+  onMemoriesChanged: ((memories: ConversationMemory[]) => void) | null = null;
+  setMemories(memories: ConversationMemory[]) { this.state.memories = memories.slice(0, 25); this.notify(); }
   private listeners: Set<Listener> = new Set();
   private durationTimer: any = null;
 
@@ -79,17 +83,10 @@ export class StateManager {
       }
 
       const savedLang = localStorage.getItem(STORAGE_KEY_LANGUAGE) as LanguageMode;
-      if (savedLang && ['english', 'telugu', 'bilingual'].includes(savedLang)) {
+      if (validLanguage(savedLang)) {
         this.state.language = savedLang;
       }
 
-      const savedMemories = localStorage.getItem(STORAGE_KEY_MEMORIES);
-      if (savedMemories) {
-        const parsed = JSON.parse(savedMemories);
-        if (Array.isArray(parsed)) {
-          this.state.memories = parsed;
-        }
-      }
     } catch (e) {
       console.warn('[StateManager] Could not load persisted data:', e);
     }
@@ -217,7 +214,7 @@ export class StateManager {
    * Records a spoken turn into the active session buffer
    */
   recordDialogueTurn(role: 'user' | 'assistant', text: string): void {
-    if (!text || text.trim().length === 0) return;
+    if (!this.memoryEnabled || !text || text.trim().length === 0) return;
     const previous = this.currentSessionTurns.at(-1);
     if (previous?.role === role) {
       previous.text += text;
@@ -329,8 +326,7 @@ export class StateManager {
     this.state.memories = [newMemory, ...this.state.memories.slice(0, MAX_STORED_MEMORIES - 1)];
 
     try {
-      localStorage.setItem(STORAGE_KEY_MEMORIES, JSON.stringify(this.state.memories));
-      console.log('[StateManager] Persisted conversation memory locally:', newMemory.summary);
+      this.onMemoriesChanged?.(this.state.memories);
     } catch (e) {
       console.warn('[StateManager] Failed saving memory to LocalStorage:', e);
     }
@@ -351,6 +347,7 @@ export class StateManager {
       return '';
     }
 
+    if (!this.memoryEnabled) return '';
     const recentMemories = this.state.memories.slice(0, 5);
     const bullets = recentMemories.map((m) => {
       const details = m.keyDetails.length > 0 ? ` (User shared: "${m.keyDetails.join('; ')}")` : '';
@@ -366,7 +363,7 @@ export class StateManager {
   deleteMemory(id: string): void {
     this.state.memories = this.state.memories.filter((m) => m.id !== id);
     try {
-      localStorage.setItem(STORAGE_KEY_MEMORIES, JSON.stringify(this.state.memories));
+      this.onMemoriesChanged?.(this.state.memories);
     } catch (e) {
       // ignore
     }
@@ -379,7 +376,7 @@ export class StateManager {
   clearAllMemories(): void {
     this.state.memories = [];
     try {
-      localStorage.removeItem(STORAGE_KEY_MEMORIES);
+      this.onMemoriesChanged?.([]);
     } catch (e) {
       // ignore
     }

@@ -1,4 +1,4 @@
-export const DESKTOP_TOOLS = new Set(['performSystemAction', 'getGmailDraft', 'draftGmailMail', 'requestGmailSend']);
+export const DESKTOP_TOOLS = new Set(['startAgentTask', 'getAgentTask', 'performSystemAction', 'getGmailDraft', 'draftGmailMail', 'requestGmailSend', 'listConnectedTools', 'callConnectedTool']);
 export function runtimePolicy(env: Record<string, string | undefined>, platform = process.platform) {
   const mode = env.SAMEERA_MODE || (platform === 'win32' ? 'local' : 'web');
   if (!['web', 'local', 'desktop'].includes(mode)) throw new Error('SAMEERA_MODE must be web, local or desktop.');

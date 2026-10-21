@@ -1,3 +1,4 @@
+import { containsSecrets } from './privacy/PrivacyService.ts';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import http from 'node:http';
@@ -23,6 +24,7 @@ export function isPublicAddress(address: string): boolean {
 
 export async function fetchPublicPage(input: string, redirects = 0): Promise<{ ok: boolean; status: number; statusText: string; headers: Headers; url: string; text: () => Promise<string> }> {
   const url = new URL(input);
+  if (containsSecrets(input)) throw new Error('Secret-like URL content is blocked.');
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || (url.port && !['80', '443'].includes(url.port))) throw new Error('Choose a public HTTP or HTTPS webpage.');
   const hostname = url.hostname.replace(/^\[|\]$/g, '');
   const addresses = isIP(hostname) ? [{ address: hostname, family: isIP(hostname) }] : await lookup(hostname, { all: true });
