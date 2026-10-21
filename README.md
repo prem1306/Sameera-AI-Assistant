@@ -4,7 +4,7 @@ Sameera is a multilingual voice assistant with a React interface, a Node.js back
 
 The browser version provides cloud conversation and public web tools. The Windows desktop version adds local task execution, Word and Notepad integration, a paired Chrome extension, MCP tools, and optional local AI.
 
-**Project status:** version 1.2.0, under active development. Some features require manual setup and device testing. Read the [known limitations](#known-limitations) before relying on desktop automation.
+**Project status: Prototype (version 1.2.0).** Sameera is still under active development. Features and behavior may change, and some workflows require manual setup and device testing. Read the [known limitations](#known-limitations) before relying on desktop automation.
 
 ## Contents
 
@@ -173,6 +173,10 @@ Cloud sessions connect through the backend to Gemini Live. Electron starts a loc
 | `server.ts`, `api/` | Backend composition and hosted entry point |
 
 Read [AGENTS.md](AGENTS.md) and [CODE_STRUCTURE.md](CODE_STRUCTURE.md) before making changes. The latter is the detailed module ownership map.
+
+### Contributions and recommendations welcome
+
+Changes, further development, bug fixes, feature ideas, and recommendations are welcome. Open a GitHub issue to report a problem or suggest an improvement, or submit a pull request with your proposed changes. For larger changes, start an issue to discuss the approach before implementation.
 
 ### Contribution workflow
 
